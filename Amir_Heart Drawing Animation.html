@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>heat drawing</title>
+  <style>
+      :root {
+        --bg1: #09070d;
+        --bg2: #140b1f;
+        --bg3: #241127;   /*   To change the middle name edit line 162  & made by .......& from...... to.....  at the end of the code   */
+        --pink: #ff5a8c;
+        --pink-soft: #ffb3c7;
+        --gold: #ffd166;
+        --text: #fff6fb;
+      }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,90,140,.16), transparent 28%),
+        radial-gradient(circle at 80% 30%, rgba(255,209,102,.10), transparent 24%),
+        radial-gradient(circle at 50% 85%, rgba(255,255,255,.04), transparent 34%),
+        linear-gradient(180deg, var(--bg3), var(--bg2) 45%, var(--bg1));
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    canvas{
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      display:grid;
+      place-items:center;
+      pointer-events:none;
+    }
+
+    .center-box{
+      text-align:center;
+      opacity:0;
+      transform:translateY(10px) scale(.96);
+      transition:opacity 1s ease, transform 1s ease;
+      padding:12px 30px;
+    }
+
+    .center-box.show{
+      opacity:1;
+      transform:translateY(0) scale(1);
+    }
+
+    .mai{
+      font-size:clamp(20px, 3.8vw, 42px);
+      font-weight:800;
+      letter-spacing:.08em;
+      color:var(--text);
+      text-shadow:
+        0 0 12px rgba(255,255,255,.18),
+        0 0 24px rgba(255,90,140,.18);
+      margin:0;
+      line-height:1;
+    }
+
+    .amir{
+      position:fixed !important;
+      bottom:15px !important;
+      right:20px !important;
+      left:auto !important;
+      top:auto !important;
+      transform:none !important;
+      z-index:9999;
+
+      position:fixed;
+      bottom:20px;
+      right:24px;
+      left:auto;
+      transform:none;
+      font-size:11px;
+      opacity:.35;
+      margin-top:18px;
+      font-size:clamp(16px, 2.1vw, 22px);
+      color:rgba(255, 205, 220, 0.55);
+      letter-spacing:.22em;
+      text-transform:uppercase;
+      font-weight:600;
+      text-shadow:none;
+    }
+
+    .tip{
+      position:fixed;
+      bottom:16px;
+      left:50%;
+      transform:translateX(-50%);
+      color:rgba(255,255,255,.58);
+      font-size:12px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      user-select:none;
+      animation:pulse 2s infinite;
+    }
+
+    @keyframes pulse{
+      0%,100%{opacity:.35}
+      50%{opacity:.92}
+    }
+  
+.signature{
+  position:fixed;
+  bottom:18px;
+  right:22px;
+  font-size:16px;
+  color:rgba(255,255,255,0.85);
+  letter-spacing:.08em;
+  z-index:9999;
+}
+
+
+.fromto{
+  position:fixed;
+  bottom:14px;
+  left:20px;
+  font-size:13px;
+  color:rgba(255,255,255,0.55);
+  letter-spacing:.08em;
+}
+
+.madeby{
+  position:fixed;
+  bottom:14px;
+  right:20px;
+  font-size:12px;
+  color:rgba(255,255,255,0.45);
+}
+
+</style>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <div class="overlay">
+    <div class="center-box" id="centerBox">
+      <div class="mai" id="mainWord">Mai</div>
+      
+    </div>
+  </div>
+
+  
+
+  <script>
+    // ===============================
+    // Easy edit:
+    // Change only this line if you want another word in the center
+    const CENTER_WORD = "love u";
+    // ===============================
+
+    document.getElementById("mainWord").textContent = CENTER_WORD;
+
+    const canvas = document.getElementById("scene");
+    const ctx = canvas.getContext("2d");
+    const centerBox = document.getElementById("centerBox");
+
+    let W = 0, H = 0, CX = 0, CY = 0, DPR = 1;
+
+    function resize(){
+      DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W * DPR;
+      canvas.height = H * DPR;
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      CX = W / 2;
+      CY = H / 2 - 12;
+      buildHeart();
+    }
+
+    window.addEventListener("resize", resize);
+
+    const stars = [];
+    function buildStars(){
+      stars.length = 0;
+      for(let i = 0; i < 110; i++){
+        stars.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          r: Math.random() * 1.8 + 0.4,
+          a: Math.random() * Math.PI * 2,
+          s: Math.random() * 0.018 + 0.004
+        });
+      }
+    }
+
+    const heartPoints = [];
+    function buildHeart(){
+      heartPoints.length = 0;
+      const scale = Math.min(W, H) * 0.0182;
+
+      for(let i = 0; i < 360; i++){
+        const t = (i / 360) * Math.PI * 2;
+        const x = 16 * Math.pow(Math.sin(t), 3);
+        const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+
+        heartPoints.push({
+          x: CX + x * scale,
+          y: CY + y * scale,
+          tx: x,
+          ty: y
+        });
+      }
+    }
+
+    class Ray {
+      constructor(target){
+        this.reset(target);
+      }
+
+      reset(target){
+        this.target = target;
+        this.x = CX;
+        this.y = CY;
+        const angleJitter = (Math.random() - 0.5) * 0.55;
+        const tx = target.x - CX;
+        const ty = target.y - CY;
+        const baseAngle = Math.atan2(ty, tx) + angleJitter;
+        const speed = Math.random() * 7 + 7;
+        this.vx = Math.cos(baseAngle) * speed;
+        this.vy = Math.sin(baseAngle) * speed;
+        this.life = 0;
+        this.maxLife = Math.random() * 24 + 28;
+        this.dead = false;
+        this.hit = false;
+        this.width = Math.random() * 1.8 + 1.1;
+      }
+
+      update(){
+        if(this.dead) return;
+
+        this.life++;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        const dx = this.target.x - this.x;
+        const dy = this.target.y - this.y;
+
+        this.vx += dx * 0.0065;
+        this.vy += dy * 0.0065;
+
+        this.vx *= 0.964;
+        this.vy *= 0.964;
+
+        if(!this.hit && Math.hypot(dx, dy) < 7){
+          this.hit = true;
+          bursts.push(new Burst(this.target.x, this.target.y));
+          settled.push({
+            x: this.target.x,
+            y: this.target.y,
+            alpha: 0,
+            glow: Math.random() * 0.5 + 0.5
+          });
+          this.dead = true;
+        } else if(this.life > this.maxLife){
+          this.dead = true;
+        }
+      }
+
+      draw(){
+        if(this.dead) return;
+
+        const grad = ctx.createLinearGradient(CX, CY, this.x, this.y);
+        grad.addColorStop(0, "rgba(255,255,255,0)");
+        grad.addColorStop(0.35, "rgba(255,209,102,0.55)");
+        grad.addColorStop(1, "rgba(255,90,140,0.98)");
+
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = this.width;
+        ctx.beginPath();
+        ctx.moveTo(CX, CY);
+        ctx.lineTo(this.x, this.y);
+        ctx.stroke();
+      }
+    }
+
+    class Burst{
+      constructor(x, y){
+        this.parts = [];
+        const count = 8 + Math.floor(Math.random() * 6);
+        for(let i = 0; i < count; i++){
+          const a = Math.random() * Math.PI * 2;
+          const s = Math.random() * 1.8 + 0.5;
+          this.parts.push({
+            x, y,
+            vx: Math.cos(a) * s,
+            vy: Math.sin(a) * s,
+            life: 1,
+            decay: Math.random() * 0.05 + 0.025,
+            r: Math.random() * 2 + 1
+          });
+        }
+        this.dead = false;
+      }
+
+      update(){
+        let alive = false;
+        for(const p of this.parts){
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vx *= 0.99;
+          p.vy *= 0.99;
+          p.life -= p.decay;
+          if(p.life > 0) alive = true;
+        }
+        this.dead = !alive;
+      }
+
+      draw(){
+        for(const p of this.parts){
+          if(p.life <= 0) continue;
+          ctx.beginPath();
+          ctx.fillStyle = Math.random() > 0.35
+            ? `rgba(255,90,140,${p.life})`
+            : `rgba(255,209,102,${p.life})`;
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    let rays = [];
+    let bursts = [];
+    let settled = [];
+    let traceOpacity = 1;
+    let phase = "drawing";
+    let releaseIndex = 0;
+    let finishedTime = 0;
+
+    function resetAnimation(){
+      rays = [];
+      bursts = [];
+      settled = [];
+      traceOpacity = 1;
+      phase = "drawing";
+      releaseIndex = 0;
+      finishedTime = 0;
+      centerBox.classList.remove("show");
+    }
+
+    function releaseMoreRays(){
+      const batch = 7;
+      for(let i = 0; i < batch && releaseIndex < heartPoints.length; i++, releaseIndex++){
+        rays.push(new Ray(heartPoints[releaseIndex]));
+      }
+    }
+
+    function drawBackground(time){
+      ctx.clearRect(0, 0, W, H);
+
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, "#241127");
+      bg.addColorStop(0.5, "#140b1f");
+      bg.addColorStop(1, "#09070d");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      for(const s of stars){
+        s.a += s.s;
+        const alpha = 0.25 + (Math.sin(s.a) + 1) * 0.18;
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const glow = ctx.createRadialGradient(CX, CY, 10, CX, CY, Math.min(W, H) * 0.35);
+      glow.addColorStop(0, "rgba(255,90,140,0.08)");
+      glow.addColorStop(1, "rgba(255,90,140,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(CX, CY, Math.min(W, H) * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawSettledOutline(){
+      for(const p of settled){
+        p.alpha += (1 - p.alpha) * 0.08;
+
+        const halo = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 5 + p.glow * 5);
+        halo.addColorStop(0, `rgba(255,255,255,${0.36 * p.alpha * traceOpacity})`);
+        halo.addColorStop(0.4, `rgba(255,90,140,${0.55 * p.alpha * traceOpacity})`);
+        halo.addColorStop(1, "rgba(255,90,140,0)");
+
+        ctx.beginPath();
+        ctx.fillStyle = halo;
+        ctx.arc(p.x, p.y, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if(settled.length > 5){
+        ctx.beginPath();
+        ctx.lineWidth = 2.3;
+        ctx.strokeStyle = `rgba(255,182,204,${0.95 * traceOpacity})`;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = "rgba(255,90,140,0.55)";
+        ctx.moveTo(settled[0].x, settled[0].y);
+        for(let i = 1; i < settled.length; i++){
+          ctx.lineTo(settled[i].x, settled[i].y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function loop(time){
+      drawBackground(time);
+
+      if(phase === "drawing"){
+        releaseMoreRays();
+        if(releaseIndex >= heartPoints.length && rays.length === 0){
+          phase = "hold";
+          finishedTime = time;
+          centerBox.classList.add("show");
+        }
+      }
+
+      for(let i = rays.length - 1; i >= 0; i--){
+        rays[i].update();
+        rays[i].draw();
+        if(rays[i].dead) rays.splice(i, 1);
+      }
+
+      drawSettledOutline();
+
+      for(let i = bursts.length - 1; i >= 0; i--){
+        bursts[i].update();
+        bursts[i].draw();
+        if(bursts[i].dead) bursts.splice(i, 1);
+      }
+
+      if(phase === "hold"){
+        if(time - finishedTime > 1900){
+          phase = "fade-lines";
+        }
+      } else if(phase === "fade-lines"){
+        traceOpacity -= 0.015;
+        if(traceOpacity <= 0.16){
+          traceOpacity = 0.16;
+          phase = "done";
+        }
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    resize();
+    buildStars();
+    resetAnimation();
+    requestAnimationFrame(loop);
+  </script>
+
+<div class="fromto">from AMIR to JANA </div>
+<div class="madeby">made by Amir</div>
+
+</body>
+</html>
